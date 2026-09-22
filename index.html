@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>LoyerPay — hasnemtech</title>
+<style>
+  :root { --primary:#1a5f3f; --bg:#f4f6f5; --card:#fff; --border:#e0e0e0; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: 'Segoe UI', Arial, sans-serif; background:var(--bg); display:flex; height:100vh; }
+  #sidebar { width:220px; background:var(--primary); color:#fff; padding:20px 0; }
+  #sidebar h2 { padding:0 20px; font-size:18px; }
+  #sidebar button { width:100%; text-align:left; padding:12px 20px; background:none; border:none; color:#fff; font-size:14px; cursor:pointer; opacity:.85; }
+  #sidebar button:hover, #sidebar button.active { background:rgba(255,255,255,.15); opacity:1; }
+  #main { flex:1; padding:30px; overflow-y:auto; }
+  .card { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:20px; margin-bottom:16px; }
+  table { width:100%; border-collapse:collapse; }
+  th, td { text-align:left; padding:10px; border-bottom:1px solid var(--border); font-size:14px; }
+  input, select { padding:8px; border:1px solid var(--border); border-radius:4px; margin:4px 4px 4px 0; }
+  button.action { background:var(--primary); color:#fff; border:none; padding:9px 16px; border-radius:4px; cursor:pointer; }
+  .badge { padding:2px 8px; border-radius:10px; font-size:12px; }
+  .badge.confirme { background:#d4edda; color:#155724; }
+  .badge.en_attente { background:#fff3cd; color:#856404; }
+  .badge.echoue { background:#f8d7da; color:#721c24; }
+  h1 { font-size:20px; }
+  #view-config { max-width:420px; }
+  #solde-montant { font-size:32px; font-weight:bold; color:var(--primary); margin:8px 0 0 0; }
+</style>
+</head>
+<body>
+  <div id="ecran-verrou" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:200;align-items:center;justify-content:center;padding:20px">
+    <div class="card" style="width:100%;max-width:360px">
+      <h3 style="margin-top:0;text-align:center">🔒 LoyerPay verrouillé</h3>
+      <p id="verrou-nom" style="text-align:center;color:#666;font-size:13px"></p>
+      <input id="verrou-mdp" placeholder="Mot de passe" type="password" style="width:100%">
+      <button class="action" onclick="deverrouiller()" style="width:100%;margin-top:8px">Déverrouiller</button>
+      <p style="text-align:center;margin-top:14px;font-size:13px">
+        <a href="#" onclick="contacterHasnemMdpOublie(); return false;" style="color:var(--primary)">Mot de passe oublié ? Contactez HASNEM</a>
+      </p>
+    </div>
+  </div>
+
+  <div id="sidebar">
+    <h2>LoyerPay</h2>
+    <button data-view="dashboard" class="active">Locataires</button>
+    <button data-view="historique">Historique paiements</button>
+    <button data-view="solde">Solde &amp; Retrait</button>
+    <button data-view="config">Configuration</button>
+  </div>
+
+  <div id="main">
+    <div id="view-dashboard">
+      <h1>Locataires</h1>
+      <div class="card">
+        <input id="nom" placeholder="Nom locataire">
+        <input id="tel" placeholder="Téléphone (Flooz/T-Money)">
+        <input id="email" placeholder="Email (optionnel)" type="email">
+        <input id="montant" placeholder="Loyer (FCFA)" type="number">
+        <button class="action" id="bouton-ajouter-locataire" onclick="ajouterLocataire()">Ajouter</button>
+        <button id="bouton-annuler-edition" style="display:none;margin-left:8px;background:#888;color:#fff;border:none;padding:9px 16px;border-radius:4px;cursor:pointer" onclick="annulerEditionLocataire()">Annuler</button>
+      </div>
+      <div class="card">
+        <table id="table-locataires">
+          <thead><tr><th>Nom</th><th>Téléphone</th><th>Loyer</th><th>Action</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="view-historique" style="display:none">
+      <h1>Historique des paiements (12 derniers mois)</h1>
+      <div class="card">
+        <select id="select-locataire"></select>
+        <button class="action" onclick="chargerHistorique()">Afficher</button>
+      </div>
+      <div class="card">
+        <table id="table-historique">
+          <thead><tr><th>Mois</th><th>Montant</th><th>Statut</th><th>Reçu</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="view-solde" style="display:none">
+      <h1>Solde &amp; Retrait</h1>
+      <div class="card">
+        <p style="margin:0;color:#666;font-size:13px">Solde disponible</p>
+        <p id="solde-montant">...</p>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">Demander un retrait</h3>
+        <p style="font-size:13px;color:#888">Une commission de 6% est prélevée sur le montant demandé.</p>
+        <input id="retrait-montant" placeholder="Montant à retirer (FCFA)" type="number" style="width:100%">
+        <input id="retrait-telephone" placeholder="Numéro Mobile Money de réception" style="width:100%">
+        <button class="action" onclick="demanderRetrait()">Demander le retrait</button>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">Historique des retraits</h3>
+        <table id="table-retraits">
+          <thead><tr><th>Date</th><th>Montant</th><th>Commission</th><th>Net reçu</th><th>Statut</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="view-config" style="display:none">
+      <h1>Configuration</h1>
+      <div class="card" id="carte-inscription">
+        <h3 style="margin-top:0">Créer mon compte</h3>
+        <input id="inscription-nom" placeholder="Votre nom" style="width:100%">
+        <input id="inscription-tel" placeholder="Téléphone" style="width:100%">
+        <input id="inscription-email" placeholder="Email (optionnel)" style="width:100%">
+        <input id="inscription-mdp" placeholder="Mot de passe" type="password" style="width:100%">
+        <button class="action" onclick="creerCompte()">Créer mon compte</button>
+      </div>
+      <div class="card">
+        <p><b>Identifiant appareil :</b> <span id="device-id">...</span></p>
+        <input id="api-url" placeholder="URL backend (ex: https://loyerpay.hasnemtech.com)" style="width:100%">
+        <input id="gestionnaire-id" placeholder="ID gestionnaire" style="width:100%">
+        <button class="action" onclick="sauvegarderConfig()">Enregistrer</button>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">🔒 Mot de passe</h3>
+        <p style="font-size:13px;color:#888">Protège l'accès à l'application sur cet appareil.</p>
+        <input id="nouveau-mdp" placeholder="Nouveau mot de passe" type="password" style="width:100%">
+        <button class="action" onclick="changerMotDePasse()">Enregistrer le mot de passe</button>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">Tampon / Signature</h3>
+        <p style="font-size:13px;color:#666">Cette image apparaîtra automatiquement sur tous vos reçus PDF.</p>
+        <input type="file" id="signature-file" accept="image/png,image/jpeg">
+        <div id="signature-preview" style="margin-top:10px"></div>
+        <button class="action" onclick="sauvegarderSignature()" style="margin-top:10px">Enregistrer la signature</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>

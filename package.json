@@ -1,0 +1,19 @@
+{
+  "name": "loyerpay-desktop",
+  "version": "1.0.0",
+  "description": "LoyerPay - Encaissement loyers via FedaPay (hasnemtech)",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build:win": "electron-builder --win"
+  },
+  "devDependencies": {
+    "electron": "^31.3.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "tech.hasnem.loyerpay",
+    "productName": "LoyerPay",
+    "win": { "target": "nsis", "icon": "build/icon.ico" }
+  }
+}
