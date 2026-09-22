@@ -5,7 +5,8 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "build:win": "electron-builder --win"
+    "build:win": "electron-builder --win",
+    "build:mac": "electron-builder --mac"
   },
   "devDependencies": {
     "electron": "^31.3.0",
@@ -14,6 +15,7 @@
   "build": {
     "appId": "tech.hasnem.loyerpay",
     "productName": "LoyerPay",
-    "win": { "target": "nsis", "icon": "build/icon.ico" }
+    "win": { "target": "nsis", "icon": "build/icon.ico" },
+    "mac": { "target": "dmg", "icon": "icon-logo-1024.png", "category": "public.app-category.finance" }
   }
 }
